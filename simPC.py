@@ -40,14 +40,17 @@ dino = 23
 
 key_binds = ['u', 'w', 'r', 'y', 'x', 'v', 'q', 'e', 't', 'z', 'c', 'b', 'n', 'a', 'd', 'g', 'j', 'l', 'm', 's', 'f', 'h', 'k', 'i']
 
-leftColumnLocation = 2340
-rightColumnLocation = 2485
-upperRowLocations = (230, 410, 585, 770, 950, 1120)
-lowerRowLocations = (200, 385, 560, 750, 925, 1105)
+pc_resolution = (2560, 1440)
 
-bottom_left = (45, 1430)
+
+leftColumnLocation = int(2340 * pc_resolution[0] / 2560)
+lowerRowLocations = int(200 * pc_resolution[0] / 2560)
+
+bottom_left = (45 * pc_resolution[0] / 2560, 1430 * pc_resolution[1] / 1440)
 
 def click(x, y):
+    x = int(x)
+    y = int(y)
     win32api.SetCursorPos((x,y))
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
     time.sleep(0.09)
@@ -67,9 +70,9 @@ def place(monkey, x, y, individual):
         keyboard.press_and_release(key_binds[monkey])
         # just trust me that these three sleeps cannot be reduced
         sleep(0.09)
-        click(x, y)
+        click(x  * pc_resolution[0] / 2560, y * pc_resolution[1] / 1440)
         sleep(0.08)
-        click(x, y)
+        click(x  * pc_resolution[0] / 2560, y * pc_resolution[1] / 1440)
         sleep(0.08)
         try:
             sell = os.path.join(script_dir, 'sell.png')
@@ -80,7 +83,7 @@ def place(monkey, x, y, individual):
         except pyautogui.ImageNotFoundException:
             sleep(0.08)
             fitness_val -= 9
-            click(2550, 15)
+            click(2550 * pc_resolution[0] / 2560, 15 * pc_resolution[1] / 1440)
     except pyautogui.ImageNotFoundException:
         sleep(0.01)
     sleep(0.08)
@@ -101,17 +104,17 @@ def upgrade(individual, upgrade_index):
             sleep(0.06) # these two must be at least > 0.5
             sell_location = pyautogui.locateOnScreen(sell, confidence=0.8)
         except pyautogui.ImageNotFoundException:
-            click(monkey[0], monkey[1])
+            click(monkey[0]  * pc_resolution[0] / 2560, monkey[1] * pc_resolution[1] / 1440)
         try:
             sell = os.path.join(script_dir, 'sell.png')
             sleep(0.08) # these two must be at least > 0.5
             sell_location = pyautogui.locateOnScreen(sell, confidence=0.8)
-            upgrade_location = (sell_location[0] + 170, sell_location[1] - 130 - (individual['upgrades'][upgrade_index][1] * 200))
+            upgrade_location = (sell_location[0] + 170 * pc_resolution[0] / 2560, sell_location[1] - 130 * pc_resolution[1] / 1440 - (individual['upgrades'][upgrade_index][1] * 200 * pc_resolution[1] / 1440))
             click(upgrade_location[0], upgrade_location[1])
             fitness_val += 1
             sleep(0.01)
             if(monkey != individual['placed_towers'][individual['upgrades'][upgrade_index + 1][0] % len(individual['placed_towers'])]):
-                click(45, 1430)
+                click(bottom_left[0], bottom_left[1])
         except pyautogui.ImageNotFoundException:
             sleep(0.01)
     except:
@@ -135,7 +138,7 @@ def fitness(individual):
     upgrade_index = 0
     if individual['fitness_val'] > 0:# and replay == False:
         return individual['fitness_val']
-    click(leftColumnLocation, lowerRowLocations[0])
+    click(leftColumnLocation, lowerRowLocations)
     # for _ in range(numScrollsToGoFromTopToBottom):
     #     pyautogui.scroll(1)
     global on_top
