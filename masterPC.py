@@ -308,6 +308,7 @@ async def send_individual_to_sim(individual, sim_pc_ip, sim_pc_port):
         data = pickle.dumps(individual)
         await socket.send(data)
         fitness_score = pickle.loads(await socket.recv())
+        individual['fitness_val'] = fitness_score
         return individual, fitness_score
     except Exception as e:
         print(f"Error communicating with {sim_pc_ip}: {e}")
@@ -324,7 +325,7 @@ async def run_simulation_in_parallel(individuals, sim_pcs):
     return results
 
 
-sim_pcs = [("192.168.1.18", 5555)]  # IPs and ports of sim PCs
+sim_pcs = [("169.254.57.20", 5555)]  # IPs and ports of sim PCs
 
 try:
     for generation in range(num_generations):
@@ -340,11 +341,6 @@ try:
         # Step 5: Selection
         results = asyncio.run(run_simulation_in_parallel(population, sim_pcs))
         parents = select(population, population_size // 2)
-
-        #while len(parents) < population_size // 2 + 1:
-        #    random_individual = random.choice(population)
-        #    if random_individual not in parents:
-        #        parents.append(random_individual)
 
 
         # Step 6: Crossover

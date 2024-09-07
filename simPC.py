@@ -8,6 +8,7 @@ import pyautogui
 import win32api, win32con
 from pyautogui import *
 import zmq
+from PIL import Image
 
 num_towers = 101
 
@@ -40,7 +41,7 @@ dino = 23
 
 key_binds = ['u', 'w', 'r', 'y', 'x', 'v', 'q', 'e', 't', 'z', 'c', 'b', 'n', 'a', 'd', 'g', 'j', 'l', 'm', 's', 'f', 'h', 'k', 'i']
 
-pc_resolution = (2560, 1440)
+pc_resolution = (1680, 945)
 aspect_ratio = (pc_resolution[0]/pc_resolution[1]) / 1.777
 
 
@@ -48,6 +49,19 @@ leftColumnLocation = int(2340 * pc_resolution[0] * aspect_ratio / 2560)
 lowerRowLocations = int(200 * pc_resolution[0] * aspect_ratio  / 2560)
 
 bottom_left = (45 * pc_resolution[0] * aspect_ratio  / 2560, 1430 * pc_resolution[1] * aspect_ratio  / 1440)
+
+def resize_image(image_path):
+    img = Image.open(image_path)
+    new_size = (int(img.width * pc_resolution[0] / 2560), int(img.height * pc_resolution[1] / 1440))
+    resized_image = img.resize(new_size, Image.Resampling.LANCZOS)
+    resized_image.save(image_path)
+
+images = ["defeat.png", "freeplay.png", "game_over.png", "game_over2.png", "next.png", "ok.png", "play.png", "restart.png", "restartPrompt.png", "sell.png", "victory.png"]
+
+# for image in images:
+#     resize_image(image)
+#     print("Refactored " + image)
+#COMMENT THIS OUT AFTER THE FIRST RUN
 
 def click(x, y):
     x = int(x)
@@ -126,13 +140,6 @@ def fitness(individual):
     round_number = 1
     global fitness_val
     global restart
-    # global individual_number
-    # global threshold_for_next_generation_index
-    # global threshold_for_next_generation
-    # individual_number += 1
-    # print("Individual #" + str(individual_number))
-    # print(str(population_size - individual_number) + " individuals left in this generation")
-    # print("Current weakest individual that is advancing to the next generation has a score of: " + str(threshold_for_next_generation))
     restart = False
     fitness_val = 0
     tower_index = 0
@@ -140,14 +147,11 @@ def fitness(individual):
     if individual['fitness_val'] > 0:# and replay == False:
         return individual['fitness_val']
     click(leftColumnLocation, lowerRowLocations)
-    # for _ in range(numScrollsToGoFromTopToBottom):
-    #     pyautogui.scroll(1)
     global on_top
     on_top = True
-    #start_time = time.time()
     while True:
-        # while exit_event.isSet():
-        #     sleep(1)
+        while exit_event.isSet():
+            sleep(1)
         #here it checks if it won, if it does continue to freeplay
         try:
             check_victory()
@@ -189,9 +193,6 @@ def fitness(individual):
                     return fitness_val
                 round_number += 1
                 fitness_val += 100
-                #end_time = time.time()
-                #fitness_val -= end_time - start_time
-                #start_time = end_time
             except pyautogui.ImageNotFoundException:
                 sleep(0.25)
 
@@ -260,8 +261,10 @@ def start_round(individual, round_number, tower_index, upgrade_index):
     global num_towers
     global fitness_val
     global restart
+    print("Looking for play")
     play = os.path.join(script_dir, 'play.png')
     play_location = pyautogui.locateOnScreen(play, confidence=0.80)
+    print("Found play")
     #display_individual(individual, round_number)
     for _ in range (individual['wants_to_place'][round_number]):
         if tower_index < num_towers:
@@ -341,6 +344,7 @@ socket.bind("tcp://*:5555")
 
 while True:
     data = socket.recv()
+    print("Recieved individual, starting evaluation")
     individual = pickle.loads(data)
     fitness_score = fitness(individual)  # Simulate and calculate fitness
     socket.send(pickle.dumps(fitness_score))
